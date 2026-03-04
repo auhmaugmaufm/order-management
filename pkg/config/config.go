@@ -40,9 +40,9 @@ func Load() {
 
 		DBHost:    getEnv("DB_HOST", "localhost"),
 		DBPort:    getEnv("DB_PORT", "5432"),
-		DBUser:    getEnv("DB_USER", "postgres"),
-		DBPass:    getEnv("DB_PASS", "postgres"),
-		DBName:    getEnv("DB_NAME", "myapp"),
+		DBUser:    getEnv("DB_USER", "user"),
+		DBPass:    getEnv("DB_PASS", "password"),
+		DBName:    getEnv("DB_NAME", "edo_new"),
 		DBSSLMode: getEnv("DB_SSLMODE", "disable"),
 
 		JWTSecret:     getEnv("JWT_SECRET", "secretmakmak"),

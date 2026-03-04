@@ -2,8 +2,16 @@ package main
 
 import (
 	"fmt"
+	"log"
 
+	"github.com/auhmaugmaufm/event-driven-order/internal/auth"
+	"github.com/auhmaugmaufm/event-driven-order/internal/handler"
+	"github.com/auhmaugmaufm/event-driven-order/internal/middleware"
+	"github.com/auhmaugmaufm/event-driven-order/internal/repository"
+	"github.com/auhmaugmaufm/event-driven-order/internal/service"
 	"github.com/auhmaugmaufm/event-driven-order/pkg/config"
+	"github.com/auhmaugmaufm/event-driven-order/pkg/database"
+	"github.com/gofiber/fiber/v2"
 )
 
 func main() {
@@ -11,8 +19,35 @@ func main() {
 	config.Load()
 	cfg := config.Get()
 
-	// db := database.NewPostgresDB(cfg)
+	database.RunMigrations(cfg)
+	db := database.NewPostgresDB(cfg)
 
-	fmt.Println("Running on port:", cfg.AppPort)
+	jwtManager := auth.NewJWTManager(cfg.JWTSecret, cfg.JWTExpireHour)
 
+	userRepository := repository.NewUserRepository(db)
+	userService := service.NewUserService(userRepository, jwtManager)
+	userHandler := handler.NewUserHandler(userService, cfg)
+
+	app := fiber.New(fiber.Config{
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error":   "internal_error",
+				"message": err.Error(),
+			})
+		},
+	})
+
+	api := app.Group("/api/v1")
+	api.Post("/register", userHandler.Register)
+	api.Post("/login", userHandler.Login)
+
+	protected := api.Group("", middleware.AuthMiddleware(jwtManager))
+
+	protected.Get("/hello", func(c *fiber.Ctx) error {
+		return c.SendString("Hello World")
+	})
+
+	addr := fmt.Sprintf(":%s", cfg.AppPort)
+	log.Printf("Server running on %s", addr)
+	log.Fatal(app.Listen(addr))
 }

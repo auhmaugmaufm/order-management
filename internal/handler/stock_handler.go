@@ -17,43 +17,45 @@ func NewStockHandler(svc *service.StockService, cfg *config.Config) *StockHandle
 	return &StockHandler{service: svc, cfg: cfg}
 }
 
-func (h *StockHandler) IncreaseStock(c *fiber.Ctx) error {
-	var req dto.UpdateStockReq
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(dto.ErrorResponse{
-			Error:   "bad_request",
-			Message: err.Error(),
-		})
-	}
+// TODO: Stock Adjustment by create stock movement
 
-	err := h.service.IncreaseStock(req.ProductID, req.Quantity)
-	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(dto.ErrorResponse{
-			Error:   "not_found",
-			Message: err.Error(),
-		})
-	}
-	return c.SendStatus(fiber.StatusOK)
-}
+// func (h *StockHandler) IncreaseStock(c *fiber.Ctx) error {
+// 	var req dto.UpdateStockReq
+// 	if err := c.BodyParser(&req); err != nil {
+// 		return c.Status(fiber.StatusBadRequest).JSON(dto.ErrorResponse{
+// 			Error:   "bad_request",
+// 			Message: err.Error(),
+// 		})
+// 	}
 
-func (h *StockHandler) DecreaseStock(c *fiber.Ctx) error {
-	var req dto.UpdateStockReq
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(dto.ErrorResponse{
-			Error:   "bad_request",
-			Message: err.Error(),
-		})
-	}
+// 	err := h.service.IncreaseStock(req.ProductID, req.Quantity)
+// 	if err != nil {
+// 		return c.Status(fiber.StatusNotFound).JSON(dto.ErrorResponse{
+// 			Error:   "not_found",
+// 			Message: err.Error(),
+// 		})
+// 	}
+// 	return c.SendStatus(fiber.StatusOK)
+// }
 
-	err := h.service.DecreaseStock(req.ProductID, req.Quantity)
-	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(dto.ErrorResponse{
-			Error:   "not_found",
-			Message: err.Error(),
-		})
-	}
-	return c.SendStatus(fiber.StatusOK)
-}
+// func (h *StockHandler) DecreaseStock(c *fiber.Ctx) error {
+// 	var req dto.UpdateStockReq
+// 	if err := c.BodyParser(&req); err != nil {
+// 		return c.Status(fiber.StatusBadRequest).JSON(dto.ErrorResponse{
+// 			Error:   "bad_request",
+// 			Message: err.Error(),
+// 		})
+// 	}
+
+// 	err := h.service.DecreaseStock(req.ProductID, req.Quantity)
+// 	if err != nil {
+// 		return c.Status(fiber.StatusNotFound).JSON(dto.ErrorResponse{
+// 			Error:   "not_found",
+// 			Message: err.Error(),
+// 		})
+// 	}
+// 	return c.SendStatus(fiber.StatusOK)
+// }
 
 func (h *StockHandler) GetProductStock(c *fiber.Ctx) error {
 	idParam := c.Params("id")
@@ -65,7 +67,7 @@ func (h *StockHandler) GetProductStock(c *fiber.Ctx) error {
 		})
 	}
 
-	res, err := h.service.GetProductStock(id)
+	res, err := h.service.GetProductStock(c.Context(), id)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(dto.ErrorResponse{
 			Error:   "not_found",
@@ -81,7 +83,7 @@ func (h *StockHandler) GetProductStock(c *fiber.Ctx) error {
 }
 
 func (h *StockHandler) GetAllProductStocks(c *fiber.Ctx) error {
-	res, err := h.service.GetAll()
+	res, err := h.service.GetAll(c.Context())
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(dto.ErrorResponse{
 			Error:   "not_found",

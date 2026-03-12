@@ -1,10 +1,10 @@
 package domain
 
 import (
+	"context"
 	"time"
 
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
 type Stock struct {
@@ -18,9 +18,9 @@ type Stock struct {
 }
 
 type StockRepository interface {
-	CreateWithTx(tx *gorm.DB, stock *Stock) error
-	IncreaseStock(productId uuid.UUID, quantity int) error
-	DecreaseStock(productId uuid.UUID, quantity int) error
-	GetProductStock(productId uuid.UUID) (*Stock, error)
-	GetStocks() ([]Stock, error)
+	Create(ctx context.Context, stock *Stock) error
+	IncreaseStockWithTx(ctx context.Context, productId uuid.UUID, quantity int) error
+	DecreaseStockWithTx(ctx context.Context, productId uuid.UUID, quantity int) error
+	GetProductStock(ctx context.Context, productId uuid.UUID) (*Stock, error)
+	GetStocks(ctx context.Context) ([]Stock, error)
 }

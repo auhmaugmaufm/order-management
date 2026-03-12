@@ -1,10 +1,10 @@
 package handler
 
 import (
-	"github.com/auhmaugmaufm/event-driven-order/internal/domain"
 	"github.com/auhmaugmaufm/event-driven-order/internal/dto"
 	"github.com/auhmaugmaufm/event-driven-order/internal/service"
 	"github.com/auhmaugmaufm/event-driven-order/pkg/config"
+	"github.com/go-playground/validator"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
@@ -18,6 +18,8 @@ func NewProeductHandler(svc *service.ProductService, cfg *config.Config) *Produc
 	return &ProductHandler{service: svc, cfg: cfg}
 }
 
+var validate = validator.New()
+
 func (h *ProductHandler) Create(c *fiber.Ctx) error {
 	var req dto.ProductRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -26,30 +28,23 @@ func (h *ProductHandler) Create(c *fiber.Ctx) error {
 			Message: "invalid request body",
 		})
 	}
-	if req.ProductName == "" {
+
+	if err := validate.Struct(req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(dto.ErrorResponse{
 			Error:   "validation_error",
-			Message: "Product name is required",
-		})
-	}
-	if req.ProductPrice <= 0 {
-		return c.Status(fiber.StatusBadRequest).JSON(dto.ErrorResponse{
-			Error:   "validation_error",
-			Message: "Product price is required",
+			Message: err.Error(),
 		})
 	}
 
-	product := &domain.Product{
-		ProductName:  req.ProductName,
-		ProductPrice: req.ProductPrice,
-	}
-	if err := h.service.Create(product); err != nil {
+	if err := h.service.Create(c.Context(), &req); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(dto.ErrorResponse{
 			Error:   "internal_error",
 			Message: "failed to create product",
 		})
 	}
-	return nil
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"message": "createad successfully",
+	})
 }
 
 func (h *ProductHandler) GetProductByID(c *fiber.Ctx) error {
@@ -62,7 +57,7 @@ func (h *ProductHandler) GetProductByID(c *fiber.Ctx) error {
 		})
 	}
 
-	resp, err := h.service.GetByID(id)
+	resp, err := h.service.GetByID(c.Context(), id)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(dto.ErrorResponse{
 			Error:   "not_found",
@@ -77,7 +72,7 @@ func (h *ProductHandler) GetProductByID(c *fiber.Ctx) error {
 }
 
 func (h *ProductHandler) GetAllProducts(c *fiber.Ctx) error {
-	resp, err := h.service.GetAll()
+	resp, err := h.service.GetAll(c.Context())
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(dto.ErrorResponse{
 			Error:   "not_found",

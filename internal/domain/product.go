@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"time"
 
 	"github.com/google/uuid"
@@ -15,7 +16,7 @@ type Product struct {
 }
 
 type ProductRepository interface {
-	CreateWithStock(product *Product, stock *Stock) error
-	GetByID(id uuid.UUID) (*Product, error)
-	GetAll() ([]Product, error)
+	Create(ctx context.Context, product *Product) error
+	GetByID(ctx context.Context, id uuid.UUID) (*Product, error)
+	GetAll(ctx context.Context) ([]Product, error)
 }

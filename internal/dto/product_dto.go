@@ -7,8 +7,8 @@ import (
 )
 
 type ProductRequest struct {
-	ProductName  string `json:"product_name"`
-	ProductPrice uint   `json:"product_price"`
+	ProductName  string `json:"product_name" validate:"required"`
+	ProductPrice uint   `json:"product_price" validate:"required"`
 }
 
 type ProductResponse struct {

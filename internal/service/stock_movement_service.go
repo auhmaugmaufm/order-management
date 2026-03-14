@@ -41,21 +41,21 @@ func (s *StockMovementService) Create(ctx context.Context, req *dto.StockMovemen
 		// 	Quantity:  req.Quantity,
 		// } --> useless
 		if req.MovementType == "IN" {
-			return s.stockRepo.IncreaseStockWithTx(ctx, stock.ID, req.Quantity)
+			return s.stockRepo.IncreaseStockWithTx(ctx, req.ProductID, req.Quantity)
 		} else {
-			return s.stockRepo.DecreaseStockWithTx(ctx, stock.ID, req.Quantity)
+			return s.stockRepo.DecreaseStockWithTx(ctx, req.ProductID, req.Quantity)
 		}
 	})
 }
 
 func (s *StockMovementService) GetByMovementID(ctx context.Context, id uuid.UUID) (*dto.StockMovementResponse, error) {
-	movement, err := s.GetByMovementID(ctx, id)
+	movement, err := s.repo.FindByStockMovementID(ctx, id)
 	if err != nil {
 		return nil, errors.New("Stock not found")
 	}
 	return &dto.StockMovementResponse{
 		ID:           movement.ID,
-		ProductID:    movement.ID,
+		ProductID:    movement.Stock.ProductID,
 		MovementType: movement.MovementType,
 		Quantity:     movement.Quantity,
 		CreatedAt:    movement.CreatedAt,
@@ -72,7 +72,26 @@ func (s *StockMovementService) GetAllMovement(ctx context.Context) ([]dto.StockM
 	for _, movement := range movements {
 		res = append(res, dto.StockMovementResponse{
 			ID:           movement.ID,
-			ProductID:    movement.ID,
+			ProductID:    movement.Stock.ProductID,
+			MovementType: movement.MovementType,
+			Quantity:     movement.Quantity,
+			CreatedAt:    movement.CreatedAt,
+			UpdatedAt:    movement.UpdatedAt,
+		})
+	}
+	return res, nil
+}
+
+func (s *StockMovementService) GetAllMovementType(ctx context.Context, movementType string) ([]dto.StockMovementResponse, error) {
+	movements, err := s.repo.FindByMovementType(ctx, movementType)
+	if err != nil {
+		return nil, errors.New("Movements not found")
+	}
+	res := make([]dto.StockMovementResponse, 0, len(movements))
+	for _, movement := range movements {
+		res = append(res, dto.StockMovementResponse{
+			ID:           movement.ID,
+			ProductID:    movement.Stock.ProductID,
 			MovementType: movement.MovementType,
 			Quantity:     movement.Quantity,
 			CreatedAt:    movement.CreatedAt,

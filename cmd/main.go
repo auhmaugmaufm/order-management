@@ -70,6 +70,7 @@ func main() {
 	stockMovement.Post("", stockMovementHandler.Create)
 	stockMovement.Get("", stockMovementHandler.GetAllMovement)
 	stockMovement.Get("/:id", stockMovementHandler.GetMovementByID)
+	stockMovement.Get("", stockMovementHandler.GetAllMovementType)
 
 	addr := fmt.Sprintf(":%s", cfg.AppPort)
 	log.Printf("Server running on %s", addr)

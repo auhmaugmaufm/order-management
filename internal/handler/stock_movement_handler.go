@@ -81,3 +81,19 @@ func (h *StockMovementHandler) GetAllMovement(c *fiber.Ctx) error {
 		Status: fiber.StatusOK,
 	})
 }
+
+func (h *StockMovementHandler) GetAllMovementType(c *fiber.Ctx) error {
+	movementType := c.Query("type")
+	res, err := h.service.GetAllMovementType(c.Context(), movementType)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(dto.ErrorResponse{
+			Error:   "not_found",
+			Message: err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(dto.SuccessResponse{
+		Data:   res,
+		Status: fiber.StatusOK,
+	})
+}

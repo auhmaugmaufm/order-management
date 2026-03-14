@@ -35,7 +35,7 @@ func (s *stockMovementReposity) FindByMovementType(ctx context.Context, movement
 
 func (s *stockMovementReposity) FindByStockMovementID(ctx context.Context, id uuid.UUID) (*domain.StockMovement, error) {
 	var stockMovement domain.StockMovement
-	err := s.db.WithContext(ctx).Preload("Stock").Preload("Product").Where("id = ?", id).First(&stockMovement).Error
+	err := s.db.WithContext(ctx).Preload("Stock").Preload("Stock.Product").Where("id = ?", id).First(&stockMovement).Error
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ func (s *stockMovementReposity) FindByStockMovementID(ctx context.Context, id uu
 
 func (s *stockMovementReposity) GetStockMovement(ctx context.Context) ([]domain.StockMovement, error) {
 	var stockMovements []domain.StockMovement
-	err := s.db.WithContext(ctx).Preload("Stock").Preload("Product").Find(&stockMovements).Error
+	err := s.db.WithContext(ctx).Preload("Stock").Preload("Stock.Product").Find(&stockMovements).Error
 	if err != nil {
 		return nil, err
 	}

@@ -42,6 +42,10 @@ func main() {
 	stockMovementService := service.NewStockMovementService(stockMovementRepository, txManager, stockRepository)
 	stockMovementHandler := handler.NewStockMovementHandler(stockMovementService, cfg)
 
+	orderRepository := repository.NewOrderRepository(db)
+	orderService := service.NewOrderService(orderRepository)
+	orderHandler := handler.NewOrderHandler(orderService, cfg)
+
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -71,6 +75,11 @@ func main() {
 	stockMovement.Get("", stockMovementHandler.GetAllMovement)
 	stockMovement.Get("/:id", stockMovementHandler.GetMovementByID)
 	stockMovement.Get("", stockMovementHandler.GetAllMovementType)
+
+	order := protected.Group("/order")
+	order.Get("", orderHandler.GetAll)
+	order.Post("/create", orderHandler.Create)
+	order.Get("/:id", orderHandler.GetByID)
 
 	addr := fmt.Sprintf(":%s", cfg.AppPort)
 	log.Printf("Server running on %s", addr)

@@ -24,6 +24,8 @@ type OrderItem struct {
 	OrderID   uuid.UUID `json:"order_id" gorm:"type:uuid;not null;index"`
 	Quantity  int       `json:"quantity" gorm:"not null"`
 	Price     uint      `json:"price" gorm:"not null"`
+	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 
 	Product *Product `json:"product,omitempty" gorm:"foreignKey:ProductID"`
 	Order   *Order   `json:"-" gorm:"foreignKey:OrderID"`

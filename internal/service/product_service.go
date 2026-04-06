@@ -56,9 +56,9 @@ func (s *ProductService) GetAll(ctx context.Context) ([]dto.ProductResponse, err
 	if err != nil {
 		return nil, errors.New("Products not found")
 	}
-	resp := make([]dto.ProductResponse, 0, len(products))
+	res := make([]dto.ProductResponse, 0, len(products))
 	for _, product := range products {
-		resp = append(resp, dto.ProductResponse{
+		res = append(res, dto.ProductResponse{
 			ID:           product.ID,
 			ProductName:  product.ProductName,
 			ProductPrice: product.ProductPrice,
@@ -66,5 +66,5 @@ func (s *ProductService) GetAll(ctx context.Context) ([]dto.ProductResponse, err
 			UpdatedAt:    product.UpdatedAt,
 		})
 	}
-	return resp, nil
+	return res, nil
 }

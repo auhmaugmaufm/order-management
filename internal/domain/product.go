@@ -18,5 +18,6 @@ type Product struct {
 type ProductRepository interface {
 	Create(ctx context.Context, product *Product) error
 	GetByID(ctx context.Context, id uuid.UUID) (*Product, error)
+	GetByIDs(ctx context.Context, ids []uuid.UUID) ([]Product, error)
 	GetAll(ctx context.Context) ([]Product, error)
 }

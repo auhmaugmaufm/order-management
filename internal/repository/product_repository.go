@@ -44,3 +44,12 @@ func (r *productRepository) GetAll(ctx context.Context) ([]domain.Product, error
 	}
 	return products, nil
 }
+
+func (r *productRepository) GetByIDs(ctx context.Context, ids []uuid.UUID) ([]domain.Product, error) {
+	var products []domain.Product
+	err := r.db.WithContext(ctx).Where("id IN ?", ids).Find(&products).Error
+	if err != nil {
+		return nil, err
+	}
+	return products, nil
+}

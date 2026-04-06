@@ -14,7 +14,6 @@ type OrderRequest struct {
 type OrderItemRequest struct {
 	ProductID uuid.UUID `json:"product_id" validate:"required"`
 	Quantity  int       `json:"quantity" validate:"required,min=1"`
-	Price     uint      `json:"price" validate:"required,min=1"`
 }
 
 type OrderResponse struct {

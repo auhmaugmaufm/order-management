@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"fmt"
-
 	"github.com/auhmaugmaufm/event-driven-order/internal/dto"
 	"github.com/auhmaugmaufm/event-driven-order/internal/service"
 	"github.com/auhmaugmaufm/event-driven-order/pkg/config"
@@ -23,8 +21,6 @@ func NewOrderHandler(svc *service.OrderService, cfg *config.Config) *OrderHandle
 func (h *OrderHandler) Create(c *fiber.Ctx) error {
 	var req dto.OrderRequest
 	if err := c.BodyParser(&req); err != nil {
-		fmt.Printf("DEBUG: BodyParser error: %v\n", err)
-		fmt.Printf("DEBUG: Body: %s\n", string(c.Body()))
 		return c.Status(fiber.StatusBadRequest).JSON(dto.ErrorResponse{
 			Error:   "bad_request",
 			Message: err.Error(),
@@ -75,6 +71,13 @@ func (h *OrderHandler) GetByID(c *fiber.Ctx) error {
 }
 
 func (h *OrderHandler) GetAll(c *fiber.Ctx) error {
+	var pagination dto.PaginationRequest
+	if err := c.QueryParser(&pagination); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(dto.ErrorResponse{
+			Error:   "bad_request",
+			Message: err.Error(),
+		})
+	}
 	orders, err := h.service.GetAll(c.Context())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(dto.ErrorResponse{

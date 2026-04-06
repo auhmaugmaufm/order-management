@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 
 	"github.com/auhmaugmaufm/event-driven-order/internal/domain"
 	"github.com/auhmaugmaufm/event-driven-order/internal/dto"
@@ -9,23 +10,44 @@ import (
 )
 
 type OrderService struct {
-	repo domain.OrderRepository
+	repo        domain.OrderRepository
+	productRepo domain.ProductRepository
 }
 
-func NewOrderService(repo domain.OrderRepository) *OrderService {
-	return &OrderService{repo: repo}
+func NewOrderService(repo domain.OrderRepository, productRepo domain.ProductRepository) *OrderService {
+	return &OrderService{repo: repo, productRepo: productRepo}
 }
 
 func (s *OrderService) Create(ctx context.Context, req *dto.OrderRequest) error {
+
+	productsIDs := make([]uuid.UUID, len(req.Items))
+	for i, item := range req.Items {
+		productsIDs[i] = item.ProductID
+	}
+	products, err := s.productRepo.GetByIDs(ctx, productsIDs)
+	if err != nil {
+		return err
+	}
+
+	productMap := make(map[uuid.UUID]*domain.Product, len(products))
+	for i := range products {
+		productMap[products[i].ID] = &products[i]
+	}
+
 	var totalAmount uint
 	items := make([]domain.OrderItem, len(req.Items))
 
 	for i, item := range req.Items {
-		totalAmount += item.Price * uint(item.Quantity)
+		product, ok := productMap[item.ProductID]
+		if !ok {
+			return errors.New("Products not found")
+		}
+
+		totalAmount += product.ProductPrice * uint(item.Quantity)
 		items[i] = domain.OrderItem{
 			ProductID: item.ProductID,
 			Quantity:  item.Quantity,
-			Price:     item.Price,
+			Price:     product.ProductPrice,
 		}
 	}
 

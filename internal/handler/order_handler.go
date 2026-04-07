@@ -78,7 +78,7 @@ func (h *OrderHandler) GetAll(c *fiber.Ctx) error {
 			Message: err.Error(),
 		})
 	}
-	orders, err := h.service.GetAll(c.Context())
+	orders, total, err := h.service.GetAll(c.Context(), &pagination)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(dto.ErrorResponse{
 			Error:   "internal_error",

@@ -19,7 +19,6 @@ func NewOrderService(repo domain.OrderRepository, productRepo domain.ProductRepo
 }
 
 func (s *OrderService) Create(ctx context.Context, req *dto.OrderRequest) error {
-
 	productsIDs := make([]uuid.UUID, len(req.Items))
 	for i, item := range req.Items {
 		productsIDs[i] = item.ProductID
@@ -91,10 +90,15 @@ func (s *OrderService) GetByID(ctx context.Context, id uuid.UUID) (*dto.OrderRes
 	}, nil
 }
 
-func (s *OrderService) GetAll(ctx context.Context) ([]dto.OrderResponse, error) {
-	orders, err := s.repo.GetAll(ctx)
+func (s *OrderService) GetAll(ctx context.Context, req *dto.PaginationRequest) ([]domain.Order, int64, error) {
+	pagination := &dto.PaginationRequest{
+		Limit: req.Limit,
+		Page:  req.Page,
+	}
+
+	orders, total, err := s.repo.GetAll(ctx, pagination)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	results := make([]dto.OrderResponse, len(orders))
@@ -119,6 +123,13 @@ func (s *OrderService) GetAll(ctx context.Context) ([]dto.OrderResponse, error) 
 			UpdatedAt:   order.UpdatedAt,
 		}
 	}
+	totalPage := total / int64(req.Limit)
+	response := &dto.PaginationResponse{
+		Data:        results,
+		TotalItems:  total,
+		TotalPages:  totalPage,
+		CurrentPage: req.Page,
+	}
 
-	return results, nil
+	return response, nil
 }

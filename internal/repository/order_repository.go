@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/auhmaugmaufm/event-driven-order/internal/domain"
-	"github.com/auhmaugmaufm/event-driven-order/internal/dto"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -24,13 +23,13 @@ func (r *orderRepository) Create(ctx context.Context, order *domain.Order) error
 	return nil
 }
 
-func (r *orderRepository) GetAll(ctx context.Context, pagination *dto.PaginationRequest) ([]domain.Order, int64, error) {
-	var orders []domain.Order
+func (r *orderRepository) GetAll(ctx context.Context, pagination *domain.Pagination) ([]domain.Order, int64, error) {
 	page := pagination.Page
 	limit := pagination.Limit
 
 	offset := (page - 1) * limit
 
+	var orders []domain.Order
 	err := r.db.WithContext(ctx).Limit(limit).Offset(offset).Order("created_at DESC").Preload("Items").Find(&orders).Error
 	if err != nil {
 		return nil, 0, err
@@ -39,7 +38,7 @@ func (r *orderRepository) GetAll(ctx context.Context, pagination *dto.Pagination
 	var totalOrder int64
 	fetchTotalError := r.db.WithContext(ctx).Model(&domain.Order{}).Count(&totalOrder).Error
 	if fetchTotalError != nil {
-		return nil, 0, err
+		return nil, 0, fetchTotalError
 	}
 
 	return orders, totalOrder, nil

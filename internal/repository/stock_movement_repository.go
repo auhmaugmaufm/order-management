@@ -24,13 +24,24 @@ func (s *stockMovementReposity) Create(ctx context.Context, stockMovement *domai
 	return s.db.WithContext(ctx).Create(stockMovement).Error
 }
 
-func (s *stockMovementReposity) FindByMovementType(ctx context.Context, movementType string) ([]domain.StockMovement, error) {
+func (s *stockMovementReposity) FindByMovementType(ctx context.Context, movementType string, pagination *domain.Pagination) ([]domain.StockMovement, int64, error) {
+	page := pagination.Page
+	limit := pagination.Limit
+
+	offset := (page - 1) * limit
 	var stockMovements []domain.StockMovement
-	err := s.db.WithContext(ctx).Preload("Stock").Preload("Product").Where("movement_type = ?", movementType).Find(&stockMovements).Error
+	err := s.db.WithContext(ctx).Where("movement_type = ?", movementType).Limit(limit).Offset(offset).Preload("Stock").Preload("Product").Find(&stockMovements).Error
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return stockMovements, nil
+
+	var totalOrder int64
+	fetchTotalError := s.db.WithContext(ctx).Model(&domain.StockMovement{}).Where("movement_type = ?", movementType).Count(&totalOrder).Error
+	if fetchTotalError != nil {
+		return nil, 0, fetchTotalError
+	}
+
+	return stockMovements, totalOrder, nil
 }
 
 func (s *stockMovementReposity) FindByStockMovementID(ctx context.Context, id uuid.UUID) (*domain.StockMovement, error) {
@@ -42,11 +53,23 @@ func (s *stockMovementReposity) FindByStockMovementID(ctx context.Context, id uu
 	return &stockMovement, nil
 }
 
-func (s *stockMovementReposity) GetStockMovement(ctx context.Context) ([]domain.StockMovement, error) {
+func (s *stockMovementReposity) GetStockMovement(ctx context.Context, pagination *domain.Pagination) ([]domain.StockMovement, int64, error) {
+	page := pagination.Page
+	limit := pagination.Limit
+
+	offset := (page - 1) * limit
+
 	var stockMovements []domain.StockMovement
-	err := s.db.WithContext(ctx).Preload("Stock").Preload("Stock.Product").Find(&stockMovements).Error
+	err := s.db.WithContext(ctx).Limit(limit).Offset(offset).Preload("Stock").Preload("Stock.Product").Find(&stockMovements).Error
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return stockMovements, nil
+
+	var totalOrder int64
+	fetchTotalError := s.db.WithContext(ctx).Model(&domain.StockMovement{}).Count(&totalOrder).Error
+	if fetchTotalError != nil {
+		return nil, 0, fetchTotalError
+	}
+
+	return stockMovements, totalOrder, nil
 }

@@ -22,5 +22,5 @@ type StockRepository interface {
 	IncreaseStockWithTx(ctx context.Context, productId uuid.UUID, quantity int) error
 	DecreaseStockWithTx(ctx context.Context, productId uuid.UUID, quantity int) error
 	GetProductStock(ctx context.Context, productId uuid.UUID) (*Stock, error)
-	GetStocks(ctx context.Context) ([]Stock, error)
+	GetStocks(ctx context.Context, pagination *Pagination) ([]Stock, int64, error)
 }

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/auhmaugmaufm/event-driven-order/internal/domain"
 	"github.com/auhmaugmaufm/event-driven-order/internal/dto"
 	"github.com/auhmaugmaufm/event-driven-order/internal/service"
 	"github.com/auhmaugmaufm/event-driven-order/pkg/config"
@@ -68,7 +69,20 @@ func (h *StockMovementHandler) GetMovementByID(c *fiber.Ctx) error {
 }
 
 func (h *StockMovementHandler) GetAllMovement(c *fiber.Ctx) error {
-	res, err := h.service.GetAllMovement(c.Context())
+	var req dto.PaginationRequest
+	if err := c.QueryParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(dto.ErrorResponse{
+			Error:   "bad_request",
+			Message: err.Error(),
+		})
+	}
+	req.SetDefaults()
+	pagination := &domain.Pagination{
+		Limit: req.Limit,
+		Page:  req.Page,
+	}
+
+	res, total, err := h.service.GetAllMovement(c.Context(), pagination)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(dto.ErrorResponse{
 			Error:   "not_found",
@@ -76,24 +90,67 @@ func (h *StockMovementHandler) GetAllMovement(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(dto.SuccessResponse{
-		Data:   res,
-		Status: fiber.StatusOK,
+	response := make([]dto.StockMovementResponse, 0, len(res))
+	for _, movement := range res {
+		response = append(response, dto.StockMovementResponse{
+			ID:           movement.ID,
+			ProductID:    movement.Stock.ProductID,
+			MovementType: movement.MovementType,
+			Quantity:     movement.Quantity,
+			CreatedAt:    movement.CreatedAt,
+			UpdatedAt:    movement.UpdatedAt,
+		})
+	}
+
+	totalPage := (total + int64(pagination.Limit) - 1) / int64(pagination.Limit)
+	return c.Status(fiber.StatusOK).JSON(dto.PaginationResponse{
+		Data:        response,
+		TotalItems:  total,
+		TotalPages:  totalPage,
+		CurrentPage: pagination.Page,
+		Status:      fiber.StatusOK,
 	})
 }
 
 func (h *StockMovementHandler) GetAllMovementType(c *fiber.Ctx) error {
+	var req dto.PaginationRequest
+	if err := c.QueryParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(dto.ErrorResponse{
+			Error:   "bad_request",
+			Message: err.Error(),
+		})
+	}
+	req.SetDefaults()
+	pagination := &domain.Pagination{
+		Limit: req.Limit,
+		Page:  req.Page,
+	}
 	movementType := c.Query("type")
-	res, err := h.service.GetAllMovementType(c.Context(), movementType)
+	res, total, err := h.service.GetAllMovementType(c.Context(), movementType, pagination)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(dto.ErrorResponse{
 			Error:   "not_found",
 			Message: err.Error(),
 		})
 	}
+	response := make([]dto.StockMovementResponse, 0, len(res))
+	for _, movement := range res {
+		response = append(response, dto.StockMovementResponse{
+			ID:           movement.ID,
+			ProductID:    movement.Stock.ProductID,
+			MovementType: movement.MovementType,
+			Quantity:     movement.Quantity,
+			CreatedAt:    movement.CreatedAt,
+			UpdatedAt:    movement.UpdatedAt,
+		})
+	}
 
-	return c.Status(fiber.StatusOK).JSON(dto.SuccessResponse{
-		Data:   res,
-		Status: fiber.StatusOK,
+	totalPage := (total + int64(pagination.Limit) - 1) / int64(pagination.Limit)
+	return c.Status(fiber.StatusOK).JSON(dto.PaginationResponse{
+		Data:        response,
+		TotalItems:  total,
+		TotalPages:  totalPage,
+		CurrentPage: pagination.Page,
+		Status:      fiber.StatusOK,
 	})
 }

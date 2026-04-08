@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/auhmaugmaufm/event-driven-order/internal/domain"
 	"github.com/auhmaugmaufm/event-driven-order/internal/dto"
 	"github.com/auhmaugmaufm/event-driven-order/internal/service"
 	"github.com/auhmaugmaufm/event-driven-order/pkg/config"
@@ -64,30 +65,58 @@ func (h *OrderHandler) GetByID(c *fiber.Ctx) error {
 		})
 	}
 
+	items := make([]dto.OrderItemResponse, len(order.Items))
+	for i, item := range order.Items {
+		items[i] = dto.OrderItemResponse{
+			ID:        item.ID,
+			ProductID: item.ProductID,
+			OrderID:   item.OrderID,
+			Quantity:  item.Quantity,
+			Price:     item.Price,
+		}
+	}
+
+	data := &dto.OrderResponse{
+		ID:          order.ID,
+		UserID:      order.UserID,
+		TotalAmount: order.TotalAmount,
+		Items:       items,
+		CreatedAt:   order.CreatedAt,
+		UpdatedAt:   order.UpdatedAt,
+	}
+
 	return c.Status(fiber.StatusOK).JSON(dto.SuccessResponse{
-		Data:   order,
+		Data:   data,
 		Status: fiber.StatusOK,
 	})
 }
 
 func (h *OrderHandler) GetAll(c *fiber.Ctx) error {
-	var pagination dto.PaginationRequest
-	if err := c.QueryParser(&pagination); err != nil {
+	var req dto.PaginationRequest
+	if err := c.QueryParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(dto.ErrorResponse{
 			Error:   "bad_request",
 			Message: err.Error(),
 		})
 	}
-	orders, total, err := h.service.GetAll(c.Context(), &pagination)
+	req.SetDefaults()
+	pagination := &domain.Pagination{
+		Limit: req.Limit,
+		Page:  req.Page,
+	}
+	orders, total, err := h.service.GetAll(c.Context(), pagination)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(dto.ErrorResponse{
 			Error:   "internal_error",
 			Message: "failed to fetch orders",
 		})
 	}
-
-	return c.Status(fiber.StatusOK).JSON(dto.SuccessResponse{
-		Data:   orders,
-		Status: fiber.StatusOK,
+	totalPage := (total + int64(pagination.Limit) - 1) / int64(pagination.Limit)
+	return c.Status(fiber.StatusOK).JSON(dto.PaginationResponse{
+		Data:        orders,
+		TotalItems:  total,
+		TotalPages:  totalPage,
+		CurrentPage: pagination.Page,
+		Status:      fiber.StatusOK,
 	})
 }

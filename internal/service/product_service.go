@@ -37,34 +37,19 @@ func (s *ProductService) Create(ctx context.Context, req *dto.ProductRequest) er
 	})
 }
 
-func (s *ProductService) GetByID(ctx context.Context, id uuid.UUID) (*dto.ProductResponse, error) {
+func (s *ProductService) GetByID(ctx context.Context, id uuid.UUID) (*domain.Product, error) {
 	product, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, errors.New("Product not found")
 	}
-	return &dto.ProductResponse{
-		ID:           product.ID,
-		ProductName:  product.ProductName,
-		ProductPrice: product.ProductPrice,
-		CreatedAt:    product.CreatedAt,
-		UpdatedAt:    product.UpdatedAt,
-	}, nil
+	return product, nil
 }
 
-func (s *ProductService) GetAll(ctx context.Context) ([]dto.ProductResponse, error) {
-	products, err := s.repo.GetAll(ctx)
+func (s *ProductService) GetAll(ctx context.Context, req *domain.Pagination) ([]domain.Product, int64, error) {
+	products, total, err := s.repo.GetAll(ctx, req)
 	if err != nil {
-		return nil, errors.New("Products not found")
+		return nil, 0, errors.New("Products not found")
 	}
-	res := make([]dto.ProductResponse, 0, len(products))
-	for _, product := range products {
-		res = append(res, dto.ProductResponse{
-			ID:           product.ID,
-			ProductName:  product.ProductName,
-			ProductPrice: product.ProductPrice,
-			CreatedAt:    product.CreatedAt,
-			UpdatedAt:    product.UpdatedAt,
-		})
-	}
-	return res, nil
+
+	return products, total, nil
 }

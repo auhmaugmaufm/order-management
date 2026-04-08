@@ -63,73 +63,24 @@ func (s *OrderService) Create(ctx context.Context, req *dto.OrderRequest) error 
 	return nil
 }
 
-func (s *OrderService) GetByID(ctx context.Context, id uuid.UUID) (*dto.OrderResponse, error) {
+func (s *OrderService) GetByID(ctx context.Context, id uuid.UUID) (*domain.Order, error) {
 	order, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	items := make([]dto.OrderItemResponse, len(order.Items))
-	for i, item := range order.Items {
-		items[i] = dto.OrderItemResponse{
-			ID:        item.ID,
-			ProductID: item.ProductID,
-			OrderID:   item.OrderID,
-			Quantity:  item.Quantity,
-			Price:     item.Price,
-		}
-	}
-
-	return &dto.OrderResponse{
-		ID:          order.ID,
-		UserID:      order.UserID,
-		TotalAmount: order.TotalAmount,
-		Items:       items,
-		CreatedAt:   order.CreatedAt,
-		UpdatedAt:   order.UpdatedAt,
-	}, nil
+	return order, nil
 }
 
-func (s *OrderService) GetAll(ctx context.Context, req *dto.PaginationRequest) ([]domain.Order, int64, error) {
-	pagination := &dto.PaginationRequest{
+func (s *OrderService) GetAll(ctx context.Context, req *domain.Pagination) ([]domain.Order, int64, error) {
+	pagination := &domain.Pagination{
 		Limit: req.Limit,
 		Page:  req.Page,
 	}
-
 	orders, total, err := s.repo.GetAll(ctx, pagination)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	results := make([]dto.OrderResponse, len(orders))
-	for i, order := range orders {
-		items := make([]dto.OrderItemResponse, len(order.Items))
-		for j, item := range order.Items {
-			items[j] = dto.OrderItemResponse{
-				ID:        item.ID,
-				ProductID: item.ProductID,
-				OrderID:   item.OrderID,
-				Quantity:  item.Quantity,
-				Price:     item.Price,
-			}
-		}
-
-		results[i] = dto.OrderResponse{
-			ID:          order.ID,
-			UserID:      order.UserID,
-			TotalAmount: order.TotalAmount,
-			Items:       items,
-			CreatedAt:   order.CreatedAt,
-			UpdatedAt:   order.UpdatedAt,
-		}
-	}
-	totalPage := total / int64(req.Limit)
-	response := &dto.PaginationResponse{
-		Data:        results,
-		TotalItems:  total,
-		TotalPages:  totalPage,
-		CurrentPage: req.Page,
-	}
-
-	return response, nil
+	return orders, total, nil
 }

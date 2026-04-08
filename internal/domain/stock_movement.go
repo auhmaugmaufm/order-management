@@ -20,7 +20,7 @@ type StockMovement struct {
 
 type StockMovementRepository interface {
 	Create(ctx context.Context, stockMovement *StockMovement) error
-	GetStockMovement(ctx context.Context) ([]StockMovement, error)
+	GetStockMovement(ctx context.Context, pagination *Pagination) ([]StockMovement, int64, error)
 	FindByStockMovementID(ctx context.Context, id uuid.UUID) (*StockMovement, error)
-	FindByMovementType(ctx context.Context, movementType string) ([]StockMovement, error)
+	FindByMovementType(ctx context.Context, movementType string, pagination *Pagination) ([]StockMovement, int64, error)
 }

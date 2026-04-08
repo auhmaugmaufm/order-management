@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/auhmaugmaufm/event-driven-order/internal/domain"
-	"github.com/auhmaugmaufm/event-driven-order/internal/dto"
 	"github.com/google/uuid"
 )
 
@@ -27,47 +26,19 @@ func NewStockService(repo domain.StockRepository) *StockService {
 // 	return s.repo.DecreaseStockWithTx(productId, quantity)
 // }
 
-func (s *StockService) GetProductStock(ctx context.Context, productId uuid.UUID) (*dto.StockResponse, error) {
+func (s *StockService) GetProductStock(ctx context.Context, productId uuid.UUID) (*domain.Stock, error) {
 	stock, err := s.repo.GetProductStock(ctx, productId)
 	if err != nil {
 		return nil, err
 	}
-
-	productName := ""
-	if stock.Product != nil {
-		productName = stock.Product.ProductName
-	}
-
-	return &dto.StockResponse{
-		ID:          stock.ID,
-		ProductID:   stock.ProductID,
-		ProductName: productName,
-		Quantity:    stock.Quantity,
-		CreatedAt:   stock.CreatedAt,
-		UpdatedAt:   stock.UpdatedAt,
-	}, nil
+	return stock, nil
 }
 
-func (s *StockService) GetAll(ctx context.Context) ([]dto.StockResponse, error) {
-	stocks, err := s.repo.GetStocks(ctx)
+func (s *StockService) GetAll(ctx context.Context, pagination *domain.Pagination) ([]domain.Stock, int64, error) {
+	stocks, total, err := s.repo.GetStocks(ctx, pagination)
 	if err != nil {
-		return nil, errors.New("Stocks not found")
+		return nil, 0, errors.New("Stocks not found")
 	}
-	res := make([]dto.StockResponse, 0, len(stocks))
 
-	for _, stock := range stocks {
-		productName := ""
-		if stock.Product != nil {
-			productName = stock.Product.ProductName
-		}
-		res = append(res, dto.StockResponse{
-			ID:          stock.ID,
-			ProductID:   stock.ProductID,
-			ProductName: productName,
-			Quantity:    stock.Quantity,
-			CreatedAt:   stock.CreatedAt,
-			UpdatedAt:   stock.UpdatedAt,
-		})
-	}
-	return res, nil
+	return stocks, total, nil
 }

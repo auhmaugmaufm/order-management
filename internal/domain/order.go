@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/auhmaugmaufm/event-driven-order/internal/dto"
 	"github.com/google/uuid"
 )
 
@@ -35,5 +34,5 @@ type OrderItem struct {
 type OrderRepository interface {
 	Create(ctx context.Context, order *Order) error
 	GetByID(ctx context.Context, id uuid.UUID) (*Order, error)
-	GetAll(ctx context.Context, pagination *dto.PaginationRequest) ([]Order, int64, error)
+	GetAll(ctx context.Context, pagination *Pagination) ([]Order, int64, error)
 }

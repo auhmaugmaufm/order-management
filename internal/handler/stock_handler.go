@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/auhmaugmaufm/event-driven-order/internal/domain"
 	"github.com/auhmaugmaufm/event-driven-order/internal/dto"
 	"github.com/auhmaugmaufm/event-driven-order/internal/service"
 	"github.com/auhmaugmaufm/event-driven-order/pkg/config"
@@ -75,15 +76,36 @@ func (h *StockHandler) GetProductStock(c *fiber.Ctx) error {
 		})
 	}
 
+	response := &dto.StockResponse{
+		ID:          res.ID,
+		ProductID:   res.ProductID,
+		ProductName: res.Product.ProductName,
+		Quantity:    res.Quantity,
+		CreatedAt:   res.CreatedAt,
+		UpdatedAt:   res.UpdatedAt,
+	}
+
 	return c.Status(fiber.StatusOK).JSON(dto.SuccessResponse{
-		Data:   res,
+		Data:   response,
 		Status: fiber.StatusOK,
 	})
 
 }
 
 func (h *StockHandler) GetAllProductStocks(c *fiber.Ctx) error {
-	res, err := h.service.GetAll(c.Context())
+	var req dto.PaginationRequest
+	if err := c.QueryParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(dto.ErrorResponse{
+			Error:   "bad_request",
+			Message: err.Error(),
+		})
+	}
+	req.SetDefaults()
+	pagination := &domain.Pagination{
+		Limit: req.Limit,
+		Page:  req.Page,
+	}
+	res, total, err := h.service.GetAll(c.Context(), pagination)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(dto.ErrorResponse{
 			Error:   "not_found",
@@ -91,9 +113,30 @@ func (h *StockHandler) GetAllProductStocks(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(dto.SuccessResponse{
-		Data:   res,
-		Status: fiber.StatusOK,
+	response := make([]dto.StockResponse, 0, len(res))
+
+	for _, stock := range res {
+		productName := ""
+		if stock.Product != nil {
+			productName = stock.Product.ProductName
+		}
+		response = append(response, dto.StockResponse{
+			ID:          stock.ID,
+			ProductID:   stock.ProductID,
+			ProductName: productName,
+			Quantity:    stock.Quantity,
+			CreatedAt:   stock.CreatedAt,
+			UpdatedAt:   stock.UpdatedAt,
+		})
+	}
+
+	totalPage := (total + int64(pagination.Limit) - 1) / int64(pagination.Limit)
+	return c.Status(fiber.StatusOK).JSON(dto.PaginationResponse{
+		Data:        response,
+		TotalItems:  total,
+		TotalPages:  totalPage,
+		CurrentPage: pagination.Page,
+		Status:      fiber.StatusOK,
 	})
 
 }

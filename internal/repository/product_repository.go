@@ -36,13 +36,25 @@ func (r *productRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.
 	return &product, nil
 }
 
-func (r *productRepository) GetAll(ctx context.Context) ([]domain.Product, error) {
+func (r *productRepository) GetAll(ctx context.Context, pagination *domain.Pagination) ([]domain.Product, int64, error) {
+	page := pagination.Page
+	limit := pagination.Limit
+
+	offset := (page - 1) * limit
+
 	var products []domain.Product
-	err := r.db.WithContext(ctx).Find(&products).Error
+	err := r.db.WithContext(ctx).Limit(limit).Offset(offset).Find(&products).Error
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return products, nil
+
+	var totalOrder int64
+	fetchTotalError := r.db.WithContext(ctx).Model(&domain.Product{}).Count(&totalOrder).Error
+	if fetchTotalError != nil {
+		return nil, 0, fetchTotalError
+	}
+
+	return products, totalOrder, nil
 }
 
 func (r *productRepository) GetByIDs(ctx context.Context, ids []uuid.UUID) ([]domain.Product, error) {

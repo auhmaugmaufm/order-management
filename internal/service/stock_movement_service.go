@@ -63,40 +63,18 @@ func (s *StockMovementService) GetByMovementID(ctx context.Context, id uuid.UUID
 	}, nil
 }
 
-func (s *StockMovementService) GetAllMovement(ctx context.Context) ([]dto.StockMovementResponse, error) {
-	movements, err := s.repo.GetStockMovement(ctx)
+func (s *StockMovementService) GetAllMovement(ctx context.Context, pagination *domain.Pagination) ([]domain.StockMovement, int64, error) {
+	movements, total, err := s.repo.GetStockMovement(ctx, pagination)
 	if err != nil {
-		return nil, errors.New("Movements not found")
+		return nil, 0, errors.New("Movements not found")
 	}
-	res := make([]dto.StockMovementResponse, 0, len(movements))
-	for _, movement := range movements {
-		res = append(res, dto.StockMovementResponse{
-			ID:           movement.ID,
-			ProductID:    movement.Stock.ProductID,
-			MovementType: movement.MovementType,
-			Quantity:     movement.Quantity,
-			CreatedAt:    movement.CreatedAt,
-			UpdatedAt:    movement.UpdatedAt,
-		})
-	}
-	return res, nil
+	return movements, total, nil
 }
 
-func (s *StockMovementService) GetAllMovementType(ctx context.Context, movementType string) ([]dto.StockMovementResponse, error) {
-	movements, err := s.repo.FindByMovementType(ctx, movementType)
+func (s *StockMovementService) GetAllMovementType(ctx context.Context, movementType string, pagination *domain.Pagination) ([]domain.StockMovement, int64, error) {
+	movements, total, err := s.repo.FindByMovementType(ctx, movementType, pagination)
 	if err != nil {
-		return nil, errors.New("Movements not found")
+		return nil, 0, errors.New("Movements not found")
 	}
-	res := make([]dto.StockMovementResponse, 0, len(movements))
-	for _, movement := range movements {
-		res = append(res, dto.StockMovementResponse{
-			ID:           movement.ID,
-			ProductID:    movement.Stock.ProductID,
-			MovementType: movement.MovementType,
-			Quantity:     movement.Quantity,
-			CreatedAt:    movement.CreatedAt,
-			UpdatedAt:    movement.UpdatedAt,
-		})
-	}
-	return res, nil
+	return movements, total, nil
 }

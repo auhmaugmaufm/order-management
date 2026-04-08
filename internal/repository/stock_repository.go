@@ -43,11 +43,23 @@ func (r *stockRepository) GetProductStock(ctx context.Context, productId uuid.UU
 	return &stock, nil
 }
 
-func (r *stockRepository) GetStocks(ctx context.Context) ([]domain.Stock, error) {
+func (r *stockRepository) GetStocks(ctx context.Context, pagination *domain.Pagination) ([]domain.Stock, int64, error) {
+	page := pagination.Page
+	limit := pagination.Limit
+
+	offset := (page - 1) * limit
+
 	var stocks []domain.Stock
-	err := r.db.WithContext(ctx).Preload("Product").Find(&stocks).Error
+	err := r.db.WithContext(ctx).Limit(pagination.Limit).Offset(offset).Preload("Product").Find(&stocks).Error
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return stocks, nil
+
+	var totalOrder int64
+	fetchTotalError := r.db.WithContext(ctx).Model(&domain.Stock{}).Count(&totalOrder).Error
+	if fetchTotalError != nil {
+		return nil, 0, fetchTotalError
+	}
+
+	return stocks, totalOrder, nil
 }
